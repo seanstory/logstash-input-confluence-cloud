@@ -2,6 +2,7 @@
 require "logstash/inputs/base"
 require "stud/interval"
 require "socket" # for Socket.gethostname
+require "connectors_sdk"
 
 # Generate a repeating message.
 #
@@ -13,23 +14,29 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   # If undefined, Logstash will complain, even if codec is unused.
   default :codec, "plain"
 
-  # The message string to use in the event.
-  config :message, :validate => :string, :default => "Hello World!"
-
   # Set how frequently messages should be sent.
   #
   # The default, `1`, means send a message every second.
   config :interval, :validate => :number, :default => 1
 
+  config :base_url, :validate => :uri, :required => true
+  config :username, :validate => :string, :required => true
+  config :password, :validate => :password, :required => true
+
   public
   def register
     @host = Socket.gethostname
+    @confluence_client = ConnectorsSdk::ConfluenceCloud::CustomClient.new(
+      :base_url => @base_url.to_s,
+      :access_token => nil,
+      :basic_auth_token => basic_auth_token(@username, @password.value)
+    )
   end # def register
 
   def run(queue)
     # we can abort the loop if stop? becomes true
     while !stop?
-      event = LogStash::Event.new("message" => @message, "host" => @host)
+      event = LogStash::Event.new("message" => @confluence_client.me.to_s, "host" => @host)
       decorate(event)
       queue << event
       # because the sleep interval can be big, when shutdown happens
@@ -47,4 +54,11 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
     #  * cleanup temporary files
     #  * terminate spawned threads
   end
+
+  private
+
+  def basic_auth_token(username, password)
+    Base64.encode64("#{username}:#{password}")
+  end
+
 end # class LogStash::Inputs::ConfluenceCloud
