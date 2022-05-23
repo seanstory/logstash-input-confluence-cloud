@@ -8,7 +8,7 @@ require "socket" # for Socket.gethostname
 # This plugin is intented only as an example.
 
 class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
-  config_name ""
+  config_name "confluence-cloud"
 
   # If undefined, Logstash will complain, even if codec is unused.
   default :codec, "plain"
