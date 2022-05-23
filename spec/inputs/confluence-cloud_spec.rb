@@ -1,6 +1,7 @@
 # encoding: utf-8
 require "logstash/devutils/rspec/spec_helper"
-require "logstash/inputs/confluence_cloud"
+require "logstash/devutils/rspec/shared_examples"
+require "logstash/inputs/confluence-cloud"
 
 describe LogStash::Inputs::ConfluenceCloud do
 
