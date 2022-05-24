@@ -9,5 +9,4 @@ if Dir.exist?(logstash_path) && use_logstash_source
   gem 'logstash-core-plugin-api', :path => "#{logstash_path}/logstash-core-plugin-api"
 end
 
-gem "connectors_sdk", :path => "/Users/seanstory/Desktop/Dev/connectors"
-
+gem "connectors_sdk"

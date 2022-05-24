@@ -26,6 +26,7 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   public
   def register
     @host = Socket.gethostname
+    @logger.info("Got\n\tbase_url: #{@base_url.to_s}\n\tusername: #{@username}\n\tpassword: #{@password.value}")
     @confluence_client = ConnectorsSdk::ConfluenceCloud::CustomClient.new(
       :base_url => @base_url.to_s,
       :access_token => nil,
@@ -58,7 +59,7 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   private
 
   def basic_auth_token(username, password)
-    Base64.encode64("#{username}:#{password}")
+    Base64.encode64("#{username}:#{password}").gsub(/\s/,'')
   end
 
 end # class LogStash::Inputs::ConfluenceCloud
