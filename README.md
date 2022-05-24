@@ -1,15 +1,8 @@
-# Logstash Plugin
+# Confluence Cloud Logstash Input Plugin
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash).
 
-It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
-
-## Documentation
-
-Logstash provides infrastructure to automatically generate documentation for this plugin. We use the asciidoc format to write documentation so any comments in the source code will be first converted into asciidoc and then into html. All plugin documentation are placed under one [central location](http://www.elastic.co/guide/en/logstash/current/).
-
-- For formatting code or config example, you can use the asciidoc `[source,ruby]` directive
-- For more asciidoc formatting tips, see the excellent reference here https://github.com/elastic/docs#asciidoc-guide
+It is fully free and fully open code. The license is Elastic 2.0, meaning you are pretty much free to use it however you want in whatever way, as long as you don't sell it as a SaaS offering.
 
 ## Need Help?
 
@@ -20,9 +13,13 @@ Need help? Try #logstash on freenode IRC or the https://discuss.elastic.co/c/log
 ### 1. Plugin Developement and Testing
 
 #### Code
-- To get started, you'll need JRuby with the Bundler gem installed.
+- To get started, you'll need rbenv and JRuby with the Bundler gem installed.
 
-- Create a new plugin or clone and existing from the GitHub [logstash-plugins](https://github.com/logstash-plugins) organization. We also provide [example plugins](https://github.com/logstash-plugins?query=example).
+- Next, clone [Logstash](https://github.com/elastic/logstash), and set the following environment variables:
+```sh
+export LOGSTASH_PATH=/path/to/cloned/logstash
+export LOGSTASH_SOURCE=1
+```
 
 - Install dependencies
 ```sh
@@ -31,25 +28,19 @@ bundle install
 
 #### Test
 
-- Update your dependencies
-
-```sh
-bundle install
-```
-
 - Run tests
 
 ```sh
 bundle exec rspec
 ```
 
-### 2. Running your unpublished Plugin in Logstash
+### 2. Running this unpublished Plugin in Logstash
 
 #### 2.1 Run in a local Logstash clone
 
 - Edit Logstash `Gemfile` and add the local plugin path, for example:
 ```ruby
-gem "logstash-filter-awesome", :path => "/your/local/logstash-filter-awesome"
+gem "logstash-input-confluence-cloud", :path => "/your/local/logstash-input-confluence-cloud"
 ```
 - Install plugin
 ```sh
@@ -57,7 +48,17 @@ bin/logstash-plugin install --no-verify
 ```
 - Run Logstash with your plugin
 ```sh
-bin/logstash -e 'filter {awesome {}}'
+bin/logstash -e '
+input { 
+    confluence-cloud { 
+        username => "YOUR_USERNAME_HERE" 
+        api_key => "YOUR_API_KEY_HERE" 
+        base_url => "https://YOUR_SITE_HERE.atlassian.net/wiki"
+    }
+} 
+output { 
+    stdout {} 
+}'
 ```
 At this point any modifications to the plugin code will be applied to this local Logstash setup. After modifying the plugin, simply rerun Logstash.
 

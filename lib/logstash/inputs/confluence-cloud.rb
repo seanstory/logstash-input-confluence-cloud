@@ -1,12 +1,8 @@
 # encoding: utf-8
 require 'logstash/inputs/base'
 require 'stud/interval'
-require 'socket' # for Socket.gethostname
 require 'connectors_sdk'
 
-# Generate a repeating message.
-#
-# This plugin is intented only as an example.
 
 class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   config_name 'confluence-cloud'
@@ -14,13 +10,19 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   # If undefined, Logstash will complain, even if codec is unused.
   default :codec, 'plain'
 
+  # TODO: remove this
   # Set how frequently messages should be sent.
   #
   # The default, `1`, means send a message every second.
   config :interval, :validate => :number, :default => 1
 
+  # Set the url (including "/wiki/") of the Confluence Cloud account
   config :base_url, :validate => :uri, :required => true
+
+  # Set the username of the Confluence Cloud user to authenticate as
   config :username, :validate => :string, :required => true
+
+  # Set the API Key for the Confluence Cloud user to authenticate with
   config :api_key, :validate => :password, :required => true
 
   public
@@ -31,7 +33,31 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
       :access_token => nil,
       :basic_auth_token => basic_auth_token(@username, @api_key.value)
     )
-    @extractor = ConnectorsSdk::ConfluenceCloud::Extractor.new(
+  end # def register
+
+  def run(queue)
+    Time.zone_default = Time.find_zone!('UTC')
+    while !stop?
+      extractor.document_changes do |action, document_or_es_id, download_metadata|
+        if stop?
+          break
+        end
+        event = LogStash::Event.new(document_or_es_id)
+        decorate(event)
+        queue << event
+      end
+      Stud.stoppable_sleep(@interval) { stop? }
+    end
+  end
+
+  private
+
+  def basic_auth_token(username, password)
+    Base64.encode64("#{username}:#{password}").gsub(/\s/,'')
+  end
+
+  def extractor
+    @extractor ||= ConnectorsSdk::ConfluenceCloud::Extractor.new(
       content_source_id: "GENERATED-#{BSON::ObjectId.new}",
       service_type: 'confluence_cloud',
       authorization_data_proc: proc do
@@ -47,35 +73,6 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
       config: ConnectorsSdk::Atlassian::Config.new(:base_url => @base_url.to_s, :cursors => {}),
       features: {}
     )
-  end # def register
-
-  def run(queue)
-    Time.zone_default = Time.find_zone!('Eastern Time (US & Canada)')
-    while !stop?
-      @extractor.document_changes do |action, document_or_es_id, download_metadata|
-        if stop?
-          break
-        end
-        event = LogStash::Event.new(document_or_es_id)
-        decorate(event)
-        queue << event
-      end
-      Stud.stoppable_sleep(@interval) { stop? }
-    end
-  end # def run
-
-  def stop
-    # nothing to do in this case so it is not necessary to define stop
-    # examples of common "stop" tasks:
-    #  * close sockets (unblocking blocking reads/accepts)
-    #  * cleanup temporary files
-    #  * terminate spawned threads
   end
 
-  private
-
-  def basic_auth_token(username, password)
-    Base64.encode64("#{username}:#{password}").gsub(/\s/,'')
-  end
-
-end # class LogStash::Inputs::ConfluenceCloud
+end
