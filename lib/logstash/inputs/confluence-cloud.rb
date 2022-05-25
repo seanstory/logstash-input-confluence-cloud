@@ -10,12 +10,6 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   # If undefined, Logstash will complain, even if codec is unused.
   default :codec, 'plain'
 
-  # TODO: remove this
-  # Set how frequently messages should be sent.
-  #
-  # The default, `1`, means send a message every second.
-  config :interval, :validate => :number, :default => 1
-
   # Set the url (including "/wiki/") of the Confluence Cloud account
   config :base_url, :validate => :uri, :required => true
 
@@ -27,7 +21,6 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
 
   public
   def register
-    @host = Socket.gethostname
     @confluence_client = ConnectorsSdk::ConfluenceCloud::CustomClient.new(
       :base_url => @base_url.to_s,
       :access_token => nil,
@@ -37,16 +30,13 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
 
   def run(queue)
     Time.zone_default = Time.find_zone!('UTC')
-    while !stop?
-      extractor.document_changes do |action, document_or_es_id, download_metadata|
-        if stop?
-          break
-        end
-        event = LogStash::Event.new(document_or_es_id)
-        decorate(event)
-        queue << event
+    extractor.document_changes do |_a, document_or_es_id, _b|
+      if stop?
+        break
       end
-      Stud.stoppable_sleep(@interval) { stop? }
+      event = LogStash::Event.new(document_or_es_id)
+      decorate(event)
+      queue << event
     end
   end
 
