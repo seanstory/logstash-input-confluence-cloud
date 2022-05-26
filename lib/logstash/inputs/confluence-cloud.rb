@@ -2,6 +2,8 @@
 require 'logstash/inputs/base'
 require 'stud/interval'
 require 'connectors_sdk'
+require 'time'
+require_relative '../../initializers/01_hashie'
 
 
 class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
@@ -19,6 +21,9 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   # Set the API Key for the Confluence Cloud user to authenticate with
   config :api_key, :validate => :password, :required => true
 
+  # Specify a last modified date
+  config :updates_since, :validate => :string, :required => false, :default => Time.at(0).strftime('%Y-%m-%dT%H:%M:%S.%L-%Z')
+
   public
   def register
     @confluence_client = ConnectorsSdk::ConfluenceCloud::CustomClient.new(
@@ -26,11 +31,17 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
       :access_token => nil,
       :basic_auth_token => basic_auth_token(@username, @api_key.value)
     )
+    begin
+      Time.parse(@updates_since)
+      @logger.info("Updates Since: #{@updates_since}")
+    rescue => e
+      raise LogStash::ConfigurationError.new("Failed to parse `updates_since` as a timestamp", e)
+    end
   end # def register
 
   def run(queue)
     Time.zone_default = Time.find_zone!('UTC')
-    extractor.document_changes do |_a, document_or_es_id, _b|
+    extractor.document_changes(:modified_since => @updates_since) do |_a, document_or_es_id, _b|
       if stop?
         break
       end

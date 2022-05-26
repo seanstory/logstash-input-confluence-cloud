@@ -10,3 +10,4 @@ if Dir.exist?(logstash_path) && use_logstash_source
 end
 
 gem 'connectors_sdk', :path => '/Users/seanstory/Desktop/Dev/connectors'
+gem 'connectors_stubs', :path => '/Users/seanstory/Desktop/Dev/connectors'
