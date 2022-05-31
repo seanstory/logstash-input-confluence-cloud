@@ -23,12 +23,6 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
       :access_token => nil,
       :basic_auth_token => basic_auth_token(@connector_config.username, @connector_config.api_key)
     )
-    begin
-      Time.parse(@connector_config.updates_since)
-      @logger.info("Updates Since: #{@connector_config.updates_since}")
-    rescue => e
-      raise LogStash::ConfigurationError.new("Failed to parse `updates_since` as a timestamp", e)
-    end
   end # def register
 
   def run(queue)
