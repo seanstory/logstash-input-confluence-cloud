@@ -56,6 +56,7 @@ The below fields are what compose this <<hash,hash>>. For example:
 | <<plugins-{type}s-{plugin}-api_key>> |<<password,password>>|Yes
 | <<plugins-{type}s-{plugin}-sync_type>> |<<string,string>>|Yes
 | <<plugins-{type}s-{plugin}-updates_since>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-document_ids>> |<<list,list>>|No
 |=======================================================================
 
 [id="plugins-{type}s-{plugin}-base_url"]
@@ -96,6 +97,13 @@ The type of data synchronization job to run for the connector. Valid options are
 
 The timestamp representing the time after which data should be fetched from the 3rd party source.
 This field is the main distinction between `full` and `incremental` sync types, where `incremental` syncs retrieve data that has been updated since a particular time, where `full` syncs retrieve all data since the start of time.
+
+[id="plugins-{type}s-{plugin}-document_ids"]
+===== `document_ids`
+
+  * Value type is <<list,list>>
+
+The list of document IDs to evaluate, and potentially delete. This configuration is only used when `sync_type` is `'delete'`.
 
 [id="plugins-{type}s-{plugin}-common-options"]
 include::{include_path}/{type}.asciidoc[]
