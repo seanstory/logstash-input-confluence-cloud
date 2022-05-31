@@ -27,12 +27,35 @@ Leverage the power of Elastic Connectors to extract data from your Confluence Cl
 [id="plugins-{type}s-{plugin}-options"]
 ==== Confluence Cloud Input Configuration Options
 
+[id="plugins-{type}s-{plugin}-connector_config"]
+==== `connector_config`
+
+  * Value type is <<hash,hash>>
+
+The wrapper for all config parameters that may be specified for the underlying Connector.
+The below fields are what compose this <<hash,hash>>. For example:
+
+[source]
+----
+    confluence-cloud {
+        connector_config => {
+          username => "admin@example.com"
+          api_key => "<API_KEY_HERE>"
+          base_url => "https://example.atlassian.net/wiki"
+          updates_since => "2022-05-24T00:00:00Z"
+          sync_type => "incremental"
+        }
+    }
+----
+
 [cols="<,<,<",options="header",]
 |=======================================================================
 |Setting |Input type|Required
 | <<plugins-{type}s-{plugin}-base_url>> |<<uri,uri>>|Yes
 | <<plugins-{type}s-{plugin}-username>> |<<string,string>>|Yes
 | <<plugins-{type}s-{plugin}-api_key>> |<<password,password>>|Yes
+| <<plugins-{type}s-{plugin}-sync_type>> |<<string,string>>|Yes
+| <<plugins-{type}s-{plugin}-updates_since>> |<<string,string>>|No
 |=======================================================================
 
 [id="plugins-{type}s-{plugin}-base_url"]
@@ -55,6 +78,24 @@ The username of the Confluence Cloud user to authenticate as
   * Value type is <<password,password>>
 
 The API Key for the Confluence Cloud user to authenticate with
+
+[id="plugins-{type}s-{plugin}-sync_type"]
+===== `sync_type`
+
+  * Value type is <<string,string>>
+
+The type of data synchronization job to run for the connector. Valid options are:
+* `full`
+* `incremental`
+* `delete`
+
+[id="plugins-{type}s-{plugin}-updates_since"]
+===== `updates_since`
+
+  * Value type is <<string,string>>
+
+The timestamp representing the time after which data should be fetched from the 3rd party source.
+This field is the main distinction between `full` and `incremental` sync types, where `incremental` syncs retrieve data that has been updated since a particular time, where `full` syncs retrieve all data since the start of time.
 
 [id="plugins-{type}s-{plugin}-common-options"]
 include::{include_path}/{type}.asciidoc[]

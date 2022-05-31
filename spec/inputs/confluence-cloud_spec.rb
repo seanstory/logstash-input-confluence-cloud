@@ -6,9 +6,12 @@ require 'logstash/inputs/confluence-cloud'
 describe LogStash::Inputs::ConfluenceCloud do
   let(:config) do
     {
-      'base_url' => 'http://workplace-search.atlassian.net',
-      'username' => 'admin',
-      'api_key' => '1234'
+      'connector_config' => {
+        'base_url' => 'http://workplace-search.atlassian.net',
+        'username' => 'admin',
+        'api_key' => '1234',
+        'sync_type' => 'full'
+      }
     }
   end
 

@@ -4,6 +4,7 @@ require 'stud/interval'
 require 'connectors_sdk'
 require 'time'
 require_relative '../../initializers/01_hashie'
+require_relative 'config_factory'
 
 
 class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
@@ -12,28 +13,19 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
   # If undefined, Logstash will complain, even if codec is unused.
   default :codec, 'plain'
 
-  # Set the url (including "/wiki/") of the Confluence Cloud account
-  config :base_url, :validate => :uri, :required => true
-
-  # Set the username of the Confluence Cloud user to authenticate as
-  config :username, :validate => :string, :required => true
-
-  # Set the API Key for the Confluence Cloud user to authenticate with
-  config :api_key, :validate => :password, :required => true
-
-  # Specify a last modified date
-  config :updates_since, :validate => :string, :required => false, :default => Time.at(0).strftime('%Y-%m-%dT%H:%M:%S.%L-%Z')
+  config :connector_config, :validate => :hash, :required => true
 
   public
   def register
+    @connector_config = ConfigFactory.get(@connector_config)
     @confluence_client = ConnectorsSdk::ConfluenceCloud::CustomClient.new(
-      :base_url => @base_url.to_s,
+      :base_url => @connector_config.base_url,
       :access_token => nil,
-      :basic_auth_token => basic_auth_token(@username, @api_key.value)
+      :basic_auth_token => basic_auth_token(@connector_config.username, @connector_config.api_key)
     )
     begin
-      Time.parse(@updates_since)
-      @logger.info("Updates Since: #{@updates_since}")
+      Time.parse(@connector_config.updates_since)
+      @logger.info("Updates Since: #{@connector_config.updates_since}")
     rescue => e
       raise LogStash::ConfigurationError.new("Failed to parse `updates_since` as a timestamp", e)
     end
@@ -41,7 +33,7 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
 
   def run(queue)
     Time.zone_default = Time.find_zone!('UTC')
-    extractor.document_changes(:modified_since => @updates_since) do |_a, document_or_es_id, _b|
+    extractor.document_changes(:modified_since => @connector_config.updates_since) do |_a, document_or_es_id, _b|
       if stop?
         break
       end
@@ -63,15 +55,15 @@ class LogStash::Inputs::ConfluenceCloud < LogStash::Inputs::Base
       service_type: 'confluence_cloud',
       authorization_data_proc: proc do
         {
-          :base_url => @base_url.to_s,
+          :base_url => @connector_config.base_url.to_s,
           :access_token => nil,
-          :basic_auth_token => basic_auth_token(@username, @api_key.value)
+          :basic_auth_token => basic_auth_token(@connector_config.username, @connector_config.api_key.value)
         }
       end,
       client_proc: proc {
         @confluence_client
       },
-      config: ConnectorsSdk::Atlassian::Config.new(:base_url => @base_url.to_s, :cursors => {}),
+      config: ConnectorsSdk::Atlassian::Config.new(:base_url => @connector_config.base_url.to_s, :cursors => {}),
       features: {}
     )
   end
